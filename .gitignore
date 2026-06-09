@@ -1,1 +1,49 @@
-/venv
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Audio/video input files
+samples/
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.mp4
+*.ogg
+
+# Generated output
+output/
+*.pdf
+*.docx
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Model cache (whisper downloads models here)
+~/.cache/whisper/
+
+# Pytest / coverage
+.pytest_cache/
+htmlcov/
+.coverage
