@@ -20,7 +20,7 @@ torchaudio==2.3.0  # required by whisper
 torch==2.3.0   # CPU build — no CUDA needed
 soundfile==0.12.1  # wav/flac read-write
 SpeechRecognition==3.10.1 # fallback / Google SR option
-moviepy==1.0.3
+moviepy==2.2.1
 
 # NLP/summarisation
 transformers==4.41.1  # summarisation pipeline (facebook/bart-large-cnn or similar)
