@@ -1,15 +1,11 @@
-# ── MOMentum Requirements ─────────────────────────────────────────
+# MOMentum Requirements
 # Python 3.11.9 | 8 GB RAM budget
-# After install, run once:
-#   python -m nltk.downloader punkt stopwords averaged_perceptron_tagger
-# ──────────────────────────────────────────────────────────────────
 
-# --- API layer ---
+# API layer 
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
-python-multipart==0.0.9          # file uploads in FastAPI
+python-multipart==0.0.9  # file uploads in FastAPI
 
-# --- Data / utils ---
 numpy==1.26.4
 pandas==2.2.2
 pydantic==2.7.1
@@ -18,25 +14,22 @@ requests==2.32.2
 tqdm==4.66.4
 joblib==1.4.2
 
-# --- Audio processing ---
+# Audio processing
 # installed seperately openai-whisper==20231117         # base model ~140 MB, runs on CPU
-torchaudio==2.3.0                # required by whisper
-torch==2.3.0                     # CPU build — no CUDA needed
-soundfile==0.12.1                # wav/flac read-write
-SpeechRecognition==3.10.1        # fallback / Google SR option
+torchaudio==2.3.0  # required by whisper
+torch==2.3.0   # CPU build — no CUDA needed
+soundfile==0.12.1  # wav/flac read-write
+SpeechRecognition==3.10.1 # fallback / Google SR option
 
-# --- NLP / summarisation ---
-transformers==4.41.1             # summarisation pipeline (facebook/bart-large-cnn or similar)
-scikit-learn==1.4.2              # TF-IDF, cosine sim for extractive summary
-sentence-transformers==2.7.0     # semantic similarity (used in Day 8+ search feature)
+# NLP/summarisation
+transformers==4.41.1  # summarisation pipeline (facebook/bart-large-cnn or similar)
+scikit-learn==1.4.2   # TF-IDF, cosine sim for extractive summary
+sentence-transformers==2.7.0  # semantic similarity
 
-# --- Vector store (introduced Day 8) ---
-faiss-cpu==1.8.0                 # in-memory semantic search over transcripts
+# Vector store
+faiss-cpu==1.8.0                
 
-# --- Unstructured data ---
-unstructured==0.13.7             # parse uploaded docs if needed alongside audio
+# Unstructured data
+unstructured==0.13.7  # parse uploaded docs if needed alongside audio
 
-# ── Intentionally excluded ─────────────────────────────────────────
-# tensorflow / keras  — not needed; torch covers everything whisper + transformers require
-#                       add back only if a specific TF model is introduced later
-# ──────────────────────────────────────────────────────────────────
+# tensorflow / keras  — not needed; torch covers everything whisper + transformers require              
