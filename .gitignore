@@ -20,6 +20,12 @@ samples/
 *.mp4
 *.ogg
 
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+
 output/
 *.pdf
 *.docx
