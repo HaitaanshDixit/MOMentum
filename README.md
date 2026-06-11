@@ -49,18 +49,18 @@ All AI models run directly on the server.
 
 ## Features
 
-- **Video & Audio Support** — Accepts MP4, MKV, MOV, AVI, WEBM, MP3, WAV, M4A, FLAC, OGG
-- **Pre-processing Agent** — Analyzes audio quality, detects language, estimates speakers, auto-selects Whisper model
-- **Local Transcription** — OpenAI Whisper running on the server, no paid API
+- **Video & Audio Support** : Accepts MP4, MKV, MOV, AVI, WEBM, MP3, WAV, M4A, FLAC, OGG
+- **Pre-processing Agent** : Analyzes audio quality, detects language, estimates speakers, auto-selects Whisper model
+- **Local Transcription** : OpenAI Whisper running on the server, no paid API
 - **Speaker Segmentation** — Identifies and labels different speakers
-- **Auto Summarization** — Concise meeting summary via HuggingFace Transformers
-- **Action Item Extraction** — Tasks, owners, and deadlines pulled automatically
-- **Review Agent** — Self checks the MOM for completeness, refines gaps iteratively
-- **Semantic Search** — FAISS-powered search over all past meeting transcripts
-- **Structured MOM Output** — Date, attendees, agenda, discussion, decisions, action items, next steps
-- **Multiple Export Formats** — Download as `.txt`, `.md`, or `.pdf`
-- **Web Interface** — Clean drag-and-drop UI, no installation needed
-- **REST API** — FastAPI backend, usable independently by developers
+- **Auto Summarization** : Concise meeting summary via HuggingFace Transformers
+- **Action Item Extraction** : Tasks, owners, and deadlines pulled automatically
+- **Review Agent** : Self checks the MOM for completeness, refines gaps iteratively
+- **Semantic Search** : FAISS-powered search over all past meeting transcripts
+- **Structured MOM Output** : Date, attendees, agenda, discussion, decisions, action items, next steps
+- **Multiple Export Formats** : Download as `.txt`, `.md`, or `.pdf`
+- **Web Interface** : Clean drag-and-drop UI, no installation needed
+- **REST API** : FastAPI backend, usable independently by developers
 
 ---
 
