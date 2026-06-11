@@ -32,8 +32,7 @@ MOMentum is a full-stack AI web application that takes any meeting audio or vide
 1. User visits the website
 2. Uploads a meeting audio or video file
 3. If video : audio track is extracted automatically
-4. Pre-processing agent analyzes audio quality, detects language,
-   estimates speaker count, and selects the best Whisper model
+4. Pre-processing agent analyzes audio quality, detects language, estimates speaker count, and selects the best Whisper model
 5. Whisper transcribes the audio locally on the server
 6. Summarizer extracts summary, action items, and decisions
 7. Review agent checks the MOM for gaps and refines iteratively
@@ -52,7 +51,7 @@ All AI models run directly on the server.
 - **Video & Audio Support** : Accepts MP4, MKV, MOV, AVI, WEBM, MP3, WAV, M4A, FLAC, OGG
 - **Pre-processing Agent** : Analyzes audio quality, detects language, estimates speakers, auto-selects Whisper model
 - **Local Transcription** : OpenAI Whisper running on the server, no paid API
-- **Speaker Segmentation** — Identifies and labels different speakers
+- **Speaker Segmentation** : Identifies and labels different speakers
 - **Auto Summarization** : Concise meeting summary via HuggingFace Transformers
 - **Action Item Extraction** : Tasks, owners, and deadlines pulled automatically
 - **Review Agent** : Self checks the MOM for completeness, refines gaps iteratively
