@@ -1,8 +1,6 @@
 """
 audio.py
-Audio ingestion and validation module for MOMentum.
-Handles loading, validating, and extracting metadata from meeting audio files.
-Video files must be preprocessed via preprocessor.extract_audio() before passing here.
+Audio ingestion, extraction and validation module for MOMentum.
 """
 
 import os
