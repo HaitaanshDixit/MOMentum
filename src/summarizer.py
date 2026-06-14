@@ -103,7 +103,7 @@ def _summarize_text(text: str, summarizer) -> str:
             text,
             #max_length=180,
             max_length=min(180, max(50, len(text.split()) // 2)),
-            min_length=60,
+            min_length=30,
             do_sample=False,
         )
         return result[0]["summary_text"].strip()
