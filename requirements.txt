@@ -33,4 +33,6 @@ faiss-cpu==1.8.0
 # Unstructured data
 unstructured==0.13.7  # parse uploaded docs if needed alongside audio
 
-# tensorflow / keras  — not needed; torch covers everything whisper + transformers require              
+# tensorflow / keras  — not needed; torch covers everything whisper + transformers require      
+
+fpdf2==2.7.9
