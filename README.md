@@ -145,7 +145,7 @@ MOMentum/
 │   ├── summarizer.py       # Summary, action items, decisions extraction
 │   ├── reviewer.py         # Review agent — quality check + refinement loop
 │   ├── formatter.py        # MOM document structure assembly
-│   ├── exporter.py         # Export to txt / md / pdf
+│   ├── exporter.py         # Export to txt / md / pdf (more file formats to come according to meeting discussions)
 │   ├── embedder.py         # Transcript → vector embeddings (MiniLM)
 │   ├── search.py           # FAISS semantic search over past meetings
 │   └── utils.py            # Shared helpers and utilities
