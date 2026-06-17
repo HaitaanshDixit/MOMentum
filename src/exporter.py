@@ -1,9 +1,3 @@
-"""
-exporter.py
-Export module for MOMentum.
-Exports a MOMDocument to .txt, .md, or .pdf formats.
-"""
-
 import os
 from datetime import datetime
 from pathlib import Path
