@@ -14,6 +14,9 @@ from reviewer import review
 from formatter import format_mom_from_review
 from exporter import export
 
+from embedder import embed_from_pipeline
+from search import index_meeting
+
 
 BANNER = """
 ╔══════════════════════════════════════════╗
@@ -86,24 +89,25 @@ Examples:
 
 
 def run_pipeline(args) -> dict:
-    
+   
     start_time = time.time()
     exported_files = {}
 
     print(BANNER)
 
-    print("[ Stage 1/5 ]  Pre-processing ...\n")
+    print("[ Stage 1/6 ]  Pre-processing ...\n")
     try:
         profile = preprocess(args.input, output_dir=args.output)
     except (FileNotFoundError, ValueError, RuntimeError) as e:
         print(f"\n  Error in pre-processing: {e}")
         sys.exit(1)
 
+    # Override model if specified by user
     if args.model:
         print(f"\n  Model override: '{args.model}' (was '{profile.recommended_model}')")
         profile.recommended_model = args.model
 
-    print(f"\n[ Stage 2/5 ]  Transcribing audio ...\n")
+    print(f"\n[ Stage 2/6 ]  Transcribing audio ...\n")
     try:
         transcript = transcribe_from_profile(profile)
     except (FileNotFoundError, RuntimeError) as e:
@@ -124,7 +128,7 @@ def run_pipeline(args) -> dict:
         cleanup_extracted_audio(profile)
         sys.exit(1)
 
-    print(f"\n[ Stage 3/5 ]  Summarizing ...\n")
+    print(f"\n[ Stage 3/6 ]  Summarizing ...\n")
     try:
         summary = summarize_from_transcript(transcript)
     except (ValueError, RuntimeError) as e:
@@ -132,7 +136,7 @@ def run_pipeline(args) -> dict:
         cleanup_extracted_audio(profile)
         sys.exit(1)
 
-    print(f"\n[ Stage 4/5 ]  Review agent running ...\n")
+    print(f"\n[ Stage 4/6 ]  Review agent running ...\n")
     try:
         review_result = review(summary, transcript.full_text)
     except Exception as e:
@@ -146,7 +150,7 @@ def run_pipeline(args) -> dict:
             accepted=False,
         )
 
-    print(f"\n[ Stage 5/5 ]  Formatting and exporting ...\n")
+    print(f"\n[ Stage 5/6 ]  Formatting and exporting ...\n")
     try:
         mom = format_mom_from_review(
             profile=profile,
@@ -167,6 +171,19 @@ def run_pipeline(args) -> dict:
         print(f"\n  Error in export: {e}")
         cleanup_extracted_audio(profile)
         sys.exit(1)
+
+    print(f"\n[ Stage 6/6 ]  Indexing for semantic search ...\n")
+    try:
+        mom_path = list(exported_files.values())[0]
+        embedding = embed_from_pipeline(
+            transcript=transcript,
+            profile=profile,
+            mom_path=mom_path,
+        )
+        index_meeting(embedding)
+        print(f"  Meeting indexed successfully.")
+    except Exception as e:
+        print(f"  Warning: Indexing failed ({e}) — search won't include this meeting.")
 
     cleanup_extracted_audio(profile)
 
