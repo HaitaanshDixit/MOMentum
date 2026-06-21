@@ -81,7 +81,7 @@ def format_mom(
     summary: MeetingSummary,
     review_passes: int = 0,
     review_score: int = 0,
-    title: str = None,
+    title: str | None = None,
 ) -> MOMDocument:
     
     audio_name = Path(profile.audio_file.file_name).stem
@@ -89,7 +89,7 @@ def format_mom(
     generated_at = datetime.now().strftime("%d %B %Y, %I:%M %p")
 
     if not title:
-        title = f"Meeting — {date_str}"
+        title = f"Meeting - {date_str}" 
 
     # Map language code to full name
     language_display = profile.language_name if hasattr(profile, "language_name") \
@@ -124,7 +124,7 @@ def format_mom_from_review(
     profile: AudioProfile,
     transcript: TranscriptResult,
     review_result,
-    title: str = None,
+    title: str | None = None,
 ) -> MOMDocument:
     
     return format_mom(
