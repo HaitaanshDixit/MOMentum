@@ -45,3 +45,5 @@ logs/
 .pytest_cache/
 htmlcov/
 .coverage
+
+uploads_temp/
