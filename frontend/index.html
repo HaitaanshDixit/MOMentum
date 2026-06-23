@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOMentum — Minutes of Meeting Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <span class="nav-logo">MOM<span class="accent">entum</span></span>
+      <div class="nav-links">
+        <button class="nav-btn active" onclick="showPage('upload')">Generate</button>
+        <button class="nav-btn" onclick="showPage('search')">Search</button>
+        <button class="nav-btn" onclick="showPage('meetings')">Meetings</button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="page-upload" class="page active">
+    <div class="hero">
+      <p class="eyebrow">AI-powered meeting intelligence</p>
+      <h1 class="hero-title">Turn recordings into<br/><span class="accent">actionable minutes</span></h1>
+      <p class="hero-sub">Upload any meeting audio or video. Get a structured MOM with summary, action items, and decisions — in minutes.</p>
+    </div>
+
+    <div class="card upload-card" id="upload-area">
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-icon">🎙️</div>
+        <p class="drop-title">Drop your meeting recording here</p>
+        <p class="drop-sub">MP3, WAV, M4A, MP4, MKV, MOV — up to 500MB</p>
+        <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.flac,.ogg,.mp4,.mkv,.mov,.avi,.webm" hidden />
+        <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Browse files</button>
+      </div>
+
+      <div class="file-selected hidden" id="file-selected">
+        <div class="file-info">
+          <span class="file-icon">📄</span>
+          <div>
+            <p class="file-name" id="file-name-display"></p>
+            <p class="file-size" id="file-size-display"></p>
+          </div>
+          <button class="btn-icon" onclick="clearFile()" title="Remove file">✕</button>
+        </div>
+      </div>
+
+      <div class="options-row">
+        <div class="option-group">
+          <label class="option-label">Export format</label>
+          <div class="format-pills">
+            <button class="pill active" data-format="md" onclick="selectFormat(this)">Markdown</button>
+            <button class="pill" data-format="pdf" onclick="selectFormat(this)">PDF</button>
+            <button class="pill" data-format="txt" onclick="selectFormat(this)">Plain text</button>
+          </div>
+        </div>
+        <div class="option-group">
+          <label class="option-label" for="meeting-title">Meeting title <span class="optional">(optional)</span></label>
+          <input type="text" id="meeting-title" class="text-input" placeholder="e.g. Q3 Planning — June 2026" />
+        </div>
+      </div>
+
+      <div class="extras-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="save-transcript" />
+          <span>Save raw transcript</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="all-formats" />
+          <span>Export all formats</span>
+        </label>
+      </div>
+
+      <button class="btn-primary" id="generate-btn" onclick="generateMOM()" disabled>
+        Generate MOM
+      </button>
+    </div>
+
+    <div class="card progress-card hidden" id="progress-card">
+      <div class="progress-header">
+        <span class="progress-icon spin">⚙️</span>
+        <span class="progress-title" id="progress-title">Processing your meeting...</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <p class="progress-stage" id="progress-stage">Initializing pipeline...</p>
+    </div>
+
+    <div class="card result-card hidden" id="result-card">
+      <div class="result-header">
+        <span class="result-icon">✅</span>
+        <div>
+          <h2 class="result-title">MOM Generated</h2>
+          <p class="result-meta" id="result-meta"></p>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h3 class="section-label">Discussion Summary</h3>
+        <p class="section-body" id="result-overview"></p>
+      </div>
+
+      <div class="result-section" id="result-actions-wrap">
+        <h3 class="section-label">Action Items</h3>
+        <ul class="checklist" id="result-actions"></ul>
+      </div>
+
+      <div class="result-section" id="result-decisions-wrap">
+        <h3 class="section-label">Decisions Made</h3>
+        <ul class="plain-list" id="result-decisions"></ul>
+      </div>
+
+      <div class="result-section" id="result-nextsteps-wrap">
+        <h3 class="section-label">Next Steps</h3>
+        <ul class="plain-list" id="result-nextsteps"></ul>
+      </div>
+
+      <div class="result-actions-row">
+        <a class="btn-primary" id="download-btn" href="#" target="_blank">Download MOM</a>
+        <button class="btn-secondary" onclick="resetUpload()">Process another</button>
+      </div>
+    </div>
+
+    <div class="card error-card hidden" id="error-card">
+      <span class="error-icon">⚠️</span>
+      <p class="error-msg" id="error-msg"></p>
+      <button class="btn-secondary" onclick="resetUpload()">Try again</button>
+    </div>
+  </div>
+
+  <div id="page-search" class="page hidden">
+    <div class="hero">
+      <p class="eyebrow">Meeting memory</p>
+      <h1 class="hero-title">Search past<br/><span class="accent">meetings</span></h1>
+      <p class="hero-sub">Ask anything about your past meetings in plain language.</p>
+    </div>
+
+    <div class="card">
+      <div class="search-row">
+        <input type="text" id="search-input" class="text-input search-input"
+          placeholder="What was decided about the budget?" 
+          onkeydown="if(event.key==='Enter') doSearch()" />
+        <button class="btn-primary" onclick="doSearch()">Search</button>
+      </div>
+      <p class="search-hint">Try: "What action items were assigned?" or "When was the deadline discussed?"</p>
+    </div>
+
+    <div id="search-results" class="results-list"></div>
+  </div>
+
+  <div id="page-meetings" class="page hidden">
+    <div class="hero">
+      <p class="eyebrow">Your meeting archive</p>
+      <h1 class="hero-title">All <span class="accent">indexed</span> meetings</h1>
+      <p class="hero-sub">Every meeting processed by MOMentum, ready to download.</p>
+    </div>
+    <div id="meetings-list" class="results-list">
+      <p class="loading-text">Loading meetings...</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
