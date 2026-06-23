@@ -371,7 +371,7 @@ DECISIONS MADE
 --------------
 - Q3 deadline extended by two weeks
 - Budget increased by 15% for Q3
-- Design review moved to bi-weekly cadence
+- Design review moved to biweekly cadence
 
 NEXT STEPS
 ----------
