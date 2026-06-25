@@ -3,16 +3,24 @@ const API = 'http://127.0.0.1:8000';
 let selectedFile = null;
 let selectedFormat = 'md';
 
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    if (b.textContent.toLowerCase().includes(name === 'upload' ? 'gen' : name)) {
-      b.classList.add('active');
-    }
-  });
-  if (name === 'meetings') loadMeetings();
+function toggleTheme() {
+  const body = document.body;
+  const icon = document.getElementById('theme-icon');
+  if (body.classList.contains('dark')) {
+    body.classList.replace('dark', 'light');
+    icon.textContent = '🌙';
+    localStorage.setItem('theme', 'light');
+  } else {
+    body.classList.replace('light', 'dark');
+    icon.textContent = '☀️';
+    localStorage.setItem('theme', 'dark');
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.body.className = saved;
+  document.getElementById('theme-icon').textContent = saved === 'dark' ? '☀️' : '🌙';
 }
 
 function setupDragDrop() {
@@ -79,7 +87,6 @@ let currentStageIdx = 0;
 function startProgress() {
   currentStageIdx = 0;
   setProgress(0, 'Starting pipeline...');
-
   progressInterval = setInterval(() => {
     if (currentStageIdx < STAGES.length) {
       const [pct, label] = STAGES[currentStageIdx];
@@ -107,7 +114,6 @@ async function generateMOM() {
   const allFormats = document.getElementById('all-formats').checked;
   const format = allFormats ? 'md' : selectedFormat;
 
-  // Show progress, hide others
   hide('upload-area');
   hide('result-card');
   hide('error-card');
@@ -115,7 +121,6 @@ async function generateMOM() {
   document.getElementById('progress-title').textContent = `Processing ${selectedFile.name}...`;
   startProgress();
 
-  // Build form data
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('format', format);
@@ -188,78 +193,10 @@ function resetUpload() {
   document.getElementById('meeting-title').value = '';
 }
 
-async function doSearch() {
-  const query = document.getElementById('search-input').value.trim();
-  if (!query) return;
-
-  const container = document.getElementById('search-results');
-  container.innerHTML = '<p class="loading-text">Searching...</p>';
-
-  try {
-    const res = await fetch(`${API}/api/search?q=${encodeURIComponent(query)}&top_k=5`);
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.detail || 'Search failed.');
-
-    if (data.results.length === 0) {
-      container.innerHTML = '<p class="empty-text">No relevant meetings found. Try a different query.</p>';
-      return;
-    }
-
-    container.innerHTML = data.results.map(r => `
-      <div class="result-item">
-        <div class="result-item-header">
-          <span class="result-item-title">${r.audio_file}</span>
-          <span class="result-item-score">Score ${(r.score * 100).toFixed(0)}%</span>
-        </div>
-        <p class="result-item-meta">${r.date} · ${r.duration}</p>
-        <p class="result-item-preview">${r.transcript_preview}</p>
-        ${r.download_url
-          ? `<a class="btn-secondary" href="${API}${r.download_url}" target="_blank">Download MOM</a>`
-          : ''}
-      </div>
-    `).join('');
-
-  } catch (err) {
-    container.innerHTML = `<p class="empty-text">${err.message}</p>`;
-  }
-}
-
-async function loadMeetings() {
-  const container = document.getElementById('meetings-list');
-  container.innerHTML = '<p class="loading-text">Loading meetings...</p>';
-
-  try {
-    const res = await fetch(`${API}/api/meetings`);
-    const data = await res.json();
-
-    if (data.meetings.length === 0) {
-      container.innerHTML = '<p class="empty-text">No meetings indexed yet. Generate your first MOM above!</p>';
-      return;
-    }
-
-    container.innerHTML = data.meetings.map(m => `
-      <div class="result-item">
-        <div class="result-item-header">
-          <span class="result-item-title">${m.audio_file}</span>
-          <span class="result-item-score">${m.duration}</span>
-        </div>
-        <p class="result-item-meta">${m.date} · ${m.word_count} words</p>
-        <p class="result-item-preview">${m.transcript_preview}</p>
-        ${m.download_url
-          ? `<a class="btn-secondary" href="${API}${m.download_url}" target="_blank">Download MOM</a>`
-          : ''}
-      </div>
-    `).join('');
-
-  } catch (err) {
-    container.innerHTML = `<p class="empty-text">Could not load meetings. Is the server running?</p>`;
-  }
-}
-
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   setupDragDrop();
 });
