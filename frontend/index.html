@@ -5,34 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOMentum — Minutes of Meeting Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="dark">
 
   <nav class="nav">
     <div class="nav-inner">
       <span class="nav-logo">MOM<span class="accent">entum</span></span>
-      <div class="nav-links">
-        <button class="nav-btn active" onclick="showPage('upload')">Generate</button>
-        <button class="nav-btn" onclick="showPage('search')">Search</button>
-        <button class="nav-btn" onclick="showPage('meetings')">Meetings</button>
-      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span id="theme-icon">☀️</span>
+      </button>
     </div>
   </nav>
 
   <div id="page-upload" class="page active">
     <div class="hero">
-      <p class="eyebrow">AI-powered meeting intelligence</p>
-      <h1 class="hero-title">Turn recordings into<br/><span class="accent">actionable insights</span></h1>
-      <p class="hero-sub">Upload any meeting audio or video. Get a structured MOM with summary, action items, and decisions, in minutes!</p>
+      <p class="eyebrow">From recording to report</p>
+      <h1 class="hero-title">Turn recordings into <span class="accent">actionable insights</span></h1>
+      <p class="hero-sub">Upload any meeting audio or video. Get a structured MOM with summary, action items, and decisions.</p>
     </div>
 
     <div class="card upload-card" id="upload-area">
       <div class="drop-zone" id="drop-zone">
         <div class="drop-icon">🎙️</div>
         <p class="drop-title">Drop your meeting recording here</p>
-        <p class="drop-sub">MP3, WAV, M4A, MP4, MKV, MOV : up to 500MB</p>
+        <p class="drop-sub">MP3, WAV, M4A, MP4, MKV, MOV — up to 500MB</p>
         <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.flac,.ogg,.mp4,.mkv,.mov,.avi,.webm" hidden />
         <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Browse files</button>
       </div>
@@ -104,17 +102,17 @@
         <p class="section-body" id="result-overview"></p>
       </div>
 
-      <div class="result-section" id="result-actions-wrap">
+      <div class="result-section">
         <h3 class="section-label">Action Items</h3>
         <ul class="checklist" id="result-actions"></ul>
       </div>
 
-      <div class="result-section" id="result-decisions-wrap">
+      <div class="result-section">
         <h3 class="section-label">Decisions Made</h3>
         <ul class="plain-list" id="result-decisions"></ul>
       </div>
 
-      <div class="result-section" id="result-nextsteps-wrap">
+      <div class="result-section">
         <h3 class="section-label">Next Steps</h3>
         <ul class="plain-list" id="result-nextsteps"></ul>
       </div>
@@ -129,37 +127,6 @@
       <span class="error-icon">⚠️</span>
       <p class="error-msg" id="error-msg"></p>
       <button class="btn-secondary" onclick="resetUpload()">Try again</button>
-    </div>
-  </div>
-
-  <div id="page-search" class="page hidden">
-    <div class="hero">
-      <p class="eyebrow">Meeting memory</p>
-      <h1 class="hero-title">Search past<br/><span class="accent">meetings</span></h1>
-      <p class="hero-sub">Ask anything about your past meetings in plain language.</p>
-    </div>
-
-    <div class="card">
-      <div class="search-row">
-        <input type="text" id="search-input" class="text-input search-input"
-          placeholder="What was decided about the budget?" 
-          onkeydown="if(event.key==='Enter') doSearch()" />
-        <button class="btn-primary" onclick="doSearch()">Search</button>
-      </div>
-      <p class="search-hint">Try: "What action items were assigned?" or "When was the deadline discussed?"</p>
-    </div>
-
-    <div id="search-results" class="results-list"></div>
-  </div>
-
-  <div id="page-meetings" class="page hidden">
-    <div class="hero">
-      <p class="eyebrow">Your meeting archive</p>
-      <h1 class="hero-title">All <span class="accent">indexed</span> meetings</h1>
-      <p class="hero-sub">Every meeting processed by MOMentum, ready to download.</p>
-    </div>
-    <div id="meetings-list" class="results-list">
-      <p class="loading-text">Loading meetings...</p>
     </div>
   </div>
 
