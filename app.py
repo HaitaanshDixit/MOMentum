@@ -1,3 +1,8 @@
+"""
+API docs available at:
+    http://localhost:8000/docs
+"""
+
 import os
 import shutil
 import sys
@@ -19,9 +24,8 @@ from summarizer import summarize_from_transcript
 from reviewer import review, ReviewResult
 from formatter import format_mom_from_review
 from exporter import export
-from embedder import embed_from_pipeline
+from embedder import embed_from_pipeline, list_meetings
 from search import index_meeting, search_and_display
-from embedder import list_meetings
 
 app = FastAPI(
     title="MOMentum API",
@@ -45,6 +49,45 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 ALL_SUPPORTED = SUPPORTED_FORMATS | VIDEO_FORMATS
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 500))
 
+# CRON JOB
+# Optimization: pre-load all AI models when the server starts.
+# This means the first user request is instant instead of waiting for models to download/load mid-request.
+# On Render/Railway free tier, this also ensures models are ready immediately after a cold start (spin-up from inactivity).
+
+@app.on_event("startup")
+async def startup_event():
+    print("\n  MOMentum — Pre-loading AI models at startup...")
+
+    try:
+        import whisper
+        print("  Loading Whisper base model...")
+        whisper.load_model("base")
+        print("  Whisper base loaded.")
+    except Exception as e:
+        print(f"  Warning: Whisper pre-load failed ({e})")
+
+    try:
+        from transformers import pipeline
+        print("  Loading distilbart summarization model...")
+        pipeline(
+            "summarization",
+            model="sshleifer/distilbart-cnn-12-6",
+            tokenizer="sshleifer/distilbart-cnn-12-6",
+        )
+        print("  distilbart loaded.")
+    except Exception as e:
+        print(f"  Warning: distilbart pre-load failed ({e})")
+
+    try:
+        from sentence_transformers import SentenceTransformer
+        print("  Loading MiniLM embedding model...")
+        SentenceTransformer("all-MiniLM-L6-v2")
+        print("  MiniLM loaded.")
+    except Exception as e:
+        print(f"  Warning: MiniLM pre-load failed ({e})")
+
+    print("  All models ready. MOMentum is live!\n")
+
 
 @app.get("/api/health", tags=["System"])
 async def health_check():
@@ -65,15 +108,16 @@ async def upload_and_process(
     title: Optional[str] = Form(default=None),
     save_transcript_flag: bool = Form(default=False),
 ):
-    
     start_time = time.time()
 
+    # ── Validate format ──
     if format not in ["txt", "md", "pdf"]:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported format '{format}'. Use: txt, md, pdf"
         )
 
+    # ── Validate file extension ──
     suffix = Path(file.filename).suffix.lower()
     if suffix not in ALL_SUPPORTED:
         raise HTTPException(
@@ -82,6 +126,7 @@ async def upload_and_process(
                    f"Supported: {', '.join(sorted(ALL_SUPPORTED))}"
         )
 
+    # ── Validate file size ──
     tmp_path = os.path.join(UPLOAD_DIR, file.filename)
     try:
         with open(tmp_path, "wb") as f_out:
@@ -98,9 +143,9 @@ async def upload_and_process(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {e}")
 
+    # ── Run pipeline ──
     try:
         profile = preprocess(tmp_path, output_dir=OUTPUT_DIR)
-
         transcript = transcribe_from_profile(profile)
 
         if transcript.word_count == 0:
@@ -148,7 +193,6 @@ async def upload_and_process(
         except Exception:
             pass  # search indexing failure is non-fatal
 
-        # Cleanup
         cleanup_extracted_audio(profile)
 
         elapsed = round(time.time() - start_time, 1)
@@ -178,11 +222,11 @@ async def upload_and_process(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
     finally:
-        # Always clean up uploaded temp file
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
 
+# ── Download ───────────────────────────────────────────────────────────────────
 
 @app.get("/api/download/{filename}", tags=["Files"])
 async def download_mom(filename: str):
@@ -210,12 +254,11 @@ async def download_mom(filename: str):
     )
 
 
+# ── Search ─────────────────────────────────────────────────────────────────────
+
 @app.get("/api/search", tags=["Search"])
-async def semantic_search(
-    q: str,
-    top_k: int = 3,
-):
-   
+async def semantic_search(q: str, top_k: int = 3):
+    """Search past meeting transcripts using natural language."""
     if not q or not q.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
@@ -246,6 +289,7 @@ async def semantic_search(
     }
 
 
+# ── List meetings ──────────────────────────────────────────────────────────────
 
 @app.get("/api/meetings", tags=["Meetings"])
 async def get_meetings():
@@ -265,10 +309,14 @@ async def get_meetings():
     }
 
 
+# ── Serve frontend ─────────────────────────────────────────────────────────────
+
 frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
+
+# ── Run directly ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
