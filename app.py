@@ -110,14 +110,12 @@ async def upload_and_process(
 ):
     start_time = time.time()
 
-    # ── Validate format ──
     if format not in ["txt", "md", "pdf"]:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported format '{format}'. Use: txt, md, pdf"
         )
 
-    # ── Validate file extension ──
     suffix = Path(file.filename).suffix.lower()
     if suffix not in ALL_SUPPORTED:
         raise HTTPException(
@@ -126,7 +124,6 @@ async def upload_and_process(
                    f"Supported: {', '.join(sorted(ALL_SUPPORTED))}"
         )
 
-    # ── Validate file size ──
     tmp_path = os.path.join(UPLOAD_DIR, file.filename)
     try:
         with open(tmp_path, "wb") as f_out:
@@ -143,7 +140,6 @@ async def upload_and_process(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {e}")
 
-    # ── Run pipeline ──
     try:
         profile = preprocess(tmp_path, output_dir=OUTPUT_DIR)
         transcript = transcribe_from_profile(profile)
@@ -226,8 +222,6 @@ async def upload_and_process(
             os.remove(tmp_path)
 
 
-# ── Download ───────────────────────────────────────────────────────────────────
-
 @app.get("/api/download/{filename}", tags=["Files"])
 async def download_mom(filename: str):
     """Download a generated MOM file by filename."""
@@ -253,8 +247,6 @@ async def download_mom(filename: str):
         media_type=media_type,
     )
 
-
-# ── Search ─────────────────────────────────────────────────────────────────────
 
 @app.get("/api/search", tags=["Search"])
 async def semantic_search(q: str, top_k: int = 3):
@@ -289,8 +281,6 @@ async def semantic_search(q: str, top_k: int = 3):
     }
 
 
-# ── List meetings ──────────────────────────────────────────────────────────────
-
 @app.get("/api/meetings", tags=["Meetings"])
 async def get_meetings():
     """List all indexed meetings."""
@@ -309,14 +299,10 @@ async def get_meetings():
     }
 
 
-# ── Serve frontend ─────────────────────────────────────────────────────────────
-
 frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
-
-# ── Run directly ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
