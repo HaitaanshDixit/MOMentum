@@ -1,11 +1,22 @@
 """
 Summarization module for MOMentum.
 Takes raw transcript text and extracts: Meeting summary, Action items, Decisions made, Next steps
+
+Deployment modes:
+- DEPLOYMENT_MODE=full  → uses distilbart AI model for overview (local, needs ~600MB RAM)
+- DEPLOYMENT_MODE=lite  → uses extractive summarization only (deployed, lightweight)
+
+Set DEPLOYMENT_MODE=lite in Render environment variables.
 """
 
+import os
 import re
 from dataclasses import dataclass, field
-from transformers import pipeline
+
+DEPLOYMENT_MODE = os.getenv("DEPLOYMENT_MODE", "full")
+
+if DEPLOYMENT_MODE == "full":
+    from transformers import pipeline
 
 ACTION_KEYWORDS = [
     "will", "shall", "must", "need to", "needs to", "have to", "has to",
@@ -71,7 +82,6 @@ class MeetingSummary:
 
 
 def _load_summarizer():
-
     print("  Loading summarization model (distilbart-cnn-12-6) ...")
     print("  (First run downloads ~300MB — cached after that)")
     summarizer = pipeline(
@@ -84,7 +94,6 @@ def _load_summarizer():
 
 
 def _chunk_text(text: str, max_words: int = 900) -> list[str]:
-
     words = text.split()
     chunks = []
     for i in range(0, len(words), max_words):
@@ -94,21 +103,17 @@ def _chunk_text(text: str, max_words: int = 900) -> list[str]:
 
 
 def _summarize_text(text: str, summarizer) -> str:
-   
     word_count = len(text.split())
 
-    # Short text then summarize directly
     if word_count <= 900:
         result = summarizer(
             text,
-            #max_length=180,
             max_length=min(180, max(50, len(text.split()) // 2)),
             min_length=30,
             do_sample=False,
         )
         return result[0]["summary_text"].strip()
 
-    # Long text then chunk, summarize each, then summarize the summaries
     print(f"  Long transcript ({word_count} words) — processing in chunks ...")
     chunks = _chunk_text(text, max_words=900)
     chunk_summaries = []
@@ -123,7 +128,6 @@ def _summarize_text(text: str, summarizer) -> str:
         )
         chunk_summaries.append(result[0]["summary_text"].strip())
 
-    # If multiple chunks, do a final pass over combined summaries
     if len(chunk_summaries) > 1:
         combined = " ".join(chunk_summaries)
         if len(combined.split()) > 900:
@@ -139,8 +143,37 @@ def _summarize_text(text: str, summarizer) -> str:
     return chunk_summaries[0]
 
 
+def _extractive_summary(text: str, num_sentences: int = 5) -> str:
+    """
+    Pick the most information-dense sentences from the transcript.
+    Used in lite/deployment mode — no AI model needed.
+    """
+    info_keywords = [
+        "project", "team", "meeting", "discuss", "update", "plan",
+        "budget", "deadline", "decision", "agree", "confirm", "review",
+        "status", "progress", "issue", "problem", "solution", "result",
+        "will", "should", "must", "need", "action", "next", "follow",
+    ]
+
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s.strip() for s in sentences if len(s.strip().split()) >= 5]
+
+    if not sentences:
+        return text[:300] + "..."
+
+    scored = []
+    for s in sentences:
+        score = sum(1 for kw in info_keywords if kw in s.lower())
+        scored.append((score, s))
+
+    scored.sort(reverse=True)
+    top = [s for _, s in scored[:num_sentences]]
+
+    original_order = [s for s in sentences if s in top]
+    return " ".join(original_order) if original_order else " ".join(top)
+
+
 def _extract_sentences(text: str) -> list[str]:
-    # Split on sentence-ending punctuation
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     return [s.strip() for s in sentences if len(s.strip()) > 10]
 
@@ -158,50 +191,39 @@ def _clean_sentence(sentence: str) -> str:
 
 
 def _extract_action_items(sentences: list[str]) -> list[str]:
-
     action_items = []
     seen = set()
-
     for sentence in sentences:
         if _contains_keyword(sentence, ACTION_KEYWORDS):
             cleaned = _clean_sentence(sentence)
-            # Deduplicate similar items
             if cleaned not in seen and len(cleaned.split()) >= 4:
                 seen.add(cleaned)
                 action_items.append(cleaned)
-
-    return action_items[:10]  # cap at 10 most relevant
+    return action_items[:10]
 
 
 def _extract_decisions(sentences: list[str]) -> list[str]:
-
     decisions = []
     seen = set()
-
     for sentence in sentences:
         if _contains_keyword(sentence, DECISION_KEYWORDS):
             cleaned = _clean_sentence(sentence)
             if cleaned not in seen and len(cleaned.split()) >= 4:
                 seen.add(cleaned)
                 decisions.append(cleaned)
-
-    return decisions[:8]  # cap at 8
+    return decisions[:8]
 
 
 def _extract_next_steps(sentences: list[str]) -> list[str]:
-    
     next_steps = []
     seen = set()
-
     for sentence in sentences:
         if _contains_keyword(sentence, NEXT_STEPS_KEYWORDS):
             cleaned = _clean_sentence(sentence)
             if cleaned not in seen and len(cleaned.split()) >= 4:
                 seen.add(cleaned)
                 next_steps.append(cleaned)
-
-    return next_steps[:6]  # cap at 6
-
+    return next_steps[:6]
 
 
 def summarize(transcript_text: str) -> MeetingSummary:
@@ -214,14 +236,18 @@ def summarize(transcript_text: str) -> MeetingSummary:
     print(f"  MOMentum Summarizer")
     print(f"{'='*40}")
     print(f"  Transcript: {word_count_original} words")
+    print(f"  Mode: {DEPLOYMENT_MODE.upper()}")
 
-    summarizer = _load_summarizer()
-
-    print("  Generating meeting overview ...")
-    try:
-        overview = _summarize_text(transcript_text, summarizer)
-    except Exception as e:
-        raise RuntimeError(f"Summarization failed: {e}")
+    if DEPLOYMENT_MODE == "lite":
+        print("  Generating extractive overview (lite mode) ...")
+        overview = _extractive_summary(transcript_text)
+    else:
+        summarizer = _load_summarizer()
+        print("  Generating meeting overview ...")
+        try:
+            overview = _summarize_text(transcript_text, summarizer)
+        except Exception as e:
+            raise RuntimeError(f"Summarization failed: {e}")
 
     word_count_summary = len(overview.split())
     print(f"  Overview generated — {word_count_summary} words.")
@@ -250,10 +276,8 @@ def summarize(transcript_text: str) -> MeetingSummary:
     return summary
 
 
-
 def summarize_from_transcript(transcript) -> MeetingSummary:
     return summarize(transcript.full_text)
-
 
 
 if __name__ == "__main__":
@@ -282,4 +306,4 @@ if __name__ == "__main__":
         sys.exit(1)
     except (ValueError, RuntimeError) as e:
         print(f"Error: {e}")
-        sys.exit(1) 
+        sys.exit(1)
