@@ -5,8 +5,10 @@ body.dark {
   --bg-card:   #141417;
   --bg-hover:  #1a1a1f;
   --border:    #2a2a32;
-  --accent:    #7c6fff;
-  --accent-dim:#3d3880;
+  /*--accent:    #7c6fff;*/
+  --accent: #34d399;
+  /*--accent-dim:#3d3880;*/
+  --accent-dim:#064e3b;
   --text:      #e8e8f0;
   --text-2:    #b0b0c4;
   --text-3:    #5a5a6e;
@@ -19,8 +21,10 @@ body.light {
   --bg-card:   #ffffff;
   --bg-hover:  #ebebf2;
   --border:    #dcdce8;
-  --accent:    #5b4fff;
-  --accent-dim:#dddaff;
+  /*--accent:    #5b4fff;*/
+  --accent: #16a34a;
+  /*--accent-dim:#dddaff;*/
+  --accent-dim:#d1fae5;
   --text:      #111118;
   --text-2:    #44445a;
   --text-3:    #9898aa;

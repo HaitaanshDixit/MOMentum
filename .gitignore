@@ -47,3 +47,6 @@ htmlcov/
 .coverage
 
 uploads_temp/
+
+vector_store/
+

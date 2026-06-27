@@ -50,43 +50,26 @@ ALL_SUPPORTED = SUPPORTED_FORMATS | VIDEO_FORMATS
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 500))
 
 # CRON JOB
-# Optimization: pre-load all AI models when the server starts.
-# This means the first user request is instant instead of waiting for models to download/load mid-request.
-# On Render/Railway free tier, this also ensures models are ready immediately after a cold start (spin-up from inactivity).
+# Whisper loads at startup (fast, ~5 seconds)
+# distilbart loads on first summarization request and stays in memory after
+# MiniLM loads on first search and stays in memory after
+# Server starts instantly
 
 @app.on_event("startup")
 async def startup_event():
-    print("\n  MOMentum — Pre-loading AI models at startup...")
-
+    """
+    Pre-load only Whisper at startup (fast).
+    distilbart and MiniLM load on first request and stay cached in memory.
+    """
+    print("\n  MOMentum — Starting up...")
     try:
         import whisper
-        print("  Loading Whisper base model...")
+        print("  Pre-loading Whisper base model...")
         whisper.load_model("base")
-        print("  Whisper base loaded.")
+        print("  Whisper ready.")
     except Exception as e:
         print(f"  Warning: Whisper pre-load failed ({e})")
-
-    try:
-        from transformers import pipeline
-        print("  Loading distilbart summarization model...")
-        pipeline(
-            "summarization",
-            model="sshleifer/distilbart-cnn-12-6",
-            tokenizer="sshleifer/distilbart-cnn-12-6",
-        )
-        print("  distilbart loaded.")
-    except Exception as e:
-        print(f"  Warning: distilbart pre-load failed ({e})")
-
-    try:
-        from sentence_transformers import SentenceTransformer
-        print("  Loading MiniLM embedding model...")
-        SentenceTransformer("all-MiniLM-L6-v2")
-        print("  MiniLM loaded.")
-    except Exception as e:
-        print(f"  Warning: MiniLM pre-load failed ({e})")
-
-    print("  All models ready. MOMentum is live!\n")
+    print("  MOMentum is live!\n")
 
 
 @app.get("/api/health", tags=["System"])
