@@ -5,11 +5,11 @@ services:
     buildCommand: "pip install setuptools && pip install openai-whisper --no-build-isolation && pip install -r requirements.txt"
     startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1"
     envVars:
-  - key: WHISPER_MODEL
-    value: tiny
-  - key: DEPLOYMENT_MODE
-    value: lite
-  - key: MAX_FILE_SIZE_MB
-    value: 500
-  - key: PYTHON_VERSION
-    value: 3.11.9
+      - key: DEPLOYMENT_MODE
+        value: lite
+      - key: WHISPER_MODEL
+        value: tiny
+      - key: MAX_FILE_SIZE_MB
+        value: 500
+      - key: PYTHON_VERSION
+        value: 3.11.9
