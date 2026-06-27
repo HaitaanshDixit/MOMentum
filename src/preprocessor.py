@@ -1,5 +1,10 @@
 """
 Rule based pre-processing agent for MOMentum. Handles video-to-audio extraction, audio quality analysis, language detection, and Whisper model selection.
+Deployment modes:
+- DEPLOYMENT_MODE=full  → uses base/small Whisper models (local)
+- DEPLOYMENT_MODE=lite  → forces tiny Whisper model (deployed, lightweight)
+
+Set DEPLOYMENT_MODE=lite in Render environment variables.
 """
 
 import os
@@ -12,6 +17,8 @@ import torchaudio
 from moviepy import VideoFileClip
 
 from audio import load_audio, AudioFile, VIDEO_FORMATS, SUPPORTED_FORMATS
+
+DEPLOYMENT_MODE = os.getenv("DEPLOYMENT_MODE", "full")
 
 WHISPER_MODELS = ["tiny", "base", "small", "medium"]
 
@@ -158,9 +165,16 @@ def _select_model(
     language_code: str,
     duration_seconds: float,
 ) -> tuple[str, list]:
-    
+
     notes = []
-    model = "base"  # sensible default
+
+    # In lite/deployment mode — always use tiny to save RAM
+    if DEPLOYMENT_MODE == "lite":
+        notes.append("Lite deployment mode — using 'tiny' model to conserve memory.")
+        return "tiny", notes
+
+    # Full mode — smart model selection
+    model = "base"
 
     if quality == "noisy":
         model = "small"
@@ -198,6 +212,7 @@ def preprocess(file_path: str, output_dir: str = None) -> AudioProfile:
     print(f"  MOMentum Pre-processing Agent")
     print(f"{'='*40}")
     print(f"  Input: {path.name}")
+    print(f"  Mode: {DEPLOYMENT_MODE.upper()}")
 
     if is_video:
         extracted_audio_path = extract_audio(file_path, output_dir)
