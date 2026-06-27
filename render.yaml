@@ -2,7 +2,7 @@ services:
   - type: web
     name: momentum
     runtime: python
-    buildCommand: "pip install setuptools && pip install openai-whisper --no-build-isolation && pip install -r requirements.txt"
+    buildCommand: "pip install --upgrade pip setuptools wheel && pip install openai-whisper --no-build-isolation && pip install -r requirements.txt"
     startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1"
     envVars:
       - key: DEPLOYMENT_MODE
