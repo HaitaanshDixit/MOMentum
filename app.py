@@ -61,16 +61,8 @@ MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 500))
 @app.on_event("startup")
 async def startup_event():
     print(f"\n  MOMentum — Starting up (mode: {DEPLOYMENT_MODE.upper()}) ...")
-    try:
-        import whisper
-        model_size = "tiny" if DEPLOYMENT_MODE == "lite" else "base"
-        print(f"  Pre-loading Whisper {model_size} model...")
-        whisper.load_model(model_size)
-        print(f"  Whisper {model_size} ready.")
-    except Exception as e:
-        print(f"  Warning: Whisper pre-load failed ({e})")
+    print("  Models will load on first request.")
     print("  MOMentum is live!\n")
-
 
 @app.get("/api/health", tags=["System"])
 async def health_check():
