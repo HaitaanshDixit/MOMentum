@@ -1,12 +1,11 @@
 """
+FastAPI backend for MOMentum.
 API docs available at:
     http://localhost:8000/docs
 """
 
 import os
-import shutil
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Optional
@@ -26,6 +25,9 @@ from formatter import format_mom_from_review
 from exporter import export
 from embedder import embed_from_pipeline, list_meetings
 from search import index_meeting, search_and_display
+
+# Read deployment mode
+DEPLOYMENT_MODE = os.getenv("DEPLOYMENT_MODE", "full")
 
 app = FastAPI(
     title="MOMentum API",
@@ -49,24 +51,22 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 ALL_SUPPORTED = SUPPORTED_FORMATS | VIDEO_FORMATS
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 500))
 
-# CRON JOB
-# Whisper loads at startup (fast, ~5 seconds)
-# distilbart loads on first summarization request and stays in memory after
-# MiniLM loads on first search and stays in memory after
-# Server starts instantly
+
+#CRON JOB
+# Optimization: pre-load models at startup so first user request is instant.
+# In lite mode (deployed) — only Whisper tiny is preloaded to stay within 512MB RAM.
+# In full mode (local) — only Whisper base is preloaded; distilbart loads on first request.
+# distilbart and MiniLM load lazily on first use and stay cached in memory after.
 
 @app.on_event("startup")
 async def startup_event():
-    """
-    Pre-load only Whisper at startup (fast).
-    distilbart and MiniLM load on first request and stay cached in memory.
-    """
-    print("\n  MOMentum — Starting up...")
+    print(f"\n  MOMentum — Starting up (mode: {DEPLOYMENT_MODE.upper()}) ...")
     try:
         import whisper
-        print("  Pre-loading Whisper base model...")
-        whisper.load_model("base")
-        print("  Whisper ready.")
+        model_size = "tiny" if DEPLOYMENT_MODE == "lite" else "base"
+        print(f"  Pre-loading Whisper {model_size} model...")
+        whisper.load_model(model_size)
+        print(f"  Whisper {model_size} ready.")
     except Exception as e:
         print(f"  Warning: Whisper pre-load failed ({e})")
     print("  MOMentum is live!\n")
@@ -74,11 +74,11 @@ async def startup_event():
 
 @app.get("/api/health", tags=["System"])
 async def health_check():
-    """Health check endpoint."""
     meetings = list_meetings()
     return {
         "status": "ok",
         "version": "1.0.0",
+        "deployment_mode": DEPLOYMENT_MODE,
         "meetings_indexed": len(meetings),
         "supported_formats": sorted(list(ALL_SUPPORTED)),
     }
@@ -170,7 +170,7 @@ async def upload_and_process(
             )
             index_meeting(embedding)
         except Exception:
-            pass  # search indexing failure is non-fatal
+            pass
 
         cleanup_extracted_audio(profile)
 
@@ -207,14 +207,9 @@ async def upload_and_process(
 
 @app.get("/api/download/{filename}", tags=["Files"])
 async def download_mom(filename: str):
-    """Download a generated MOM file by filename."""
     filepath = os.path.join(OUTPUT_DIR, filename)
-
     if not os.path.exists(filepath):
-        raise HTTPException(
-            status_code=404,
-            detail=f"File '{filename}' not found."
-        )
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found.")
 
     ext = Path(filename).suffix.lower()
     media_types = {
@@ -223,20 +218,13 @@ async def download_mom(filename: str):
         ".pdf": "application/pdf",
     }
     media_type = media_types.get(ext, "application/octet-stream")
-
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type=media_type,
-    )
+    return FileResponse(path=filepath, filename=filename, media_type=media_type)
 
 
 @app.get("/api/search", tags=["Search"])
 async def semantic_search(q: str, top_k: int = 3):
-    """Search past meeting transcripts using natural language."""
     if not q or not q.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
-
     try:
         from search import search
         results = search(q.strip(), top_k=top_k)
@@ -266,7 +254,6 @@ async def semantic_search(q: str, top_k: int = 3):
 
 @app.get("/api/meetings", tags=["Meetings"])
 async def get_meetings():
-    """List all indexed meetings."""
     meetings = list_meetings()
     return {
         "total": len(meetings),
@@ -289,9 +276,4 @@ if os.path.exists(frontend_dir):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
