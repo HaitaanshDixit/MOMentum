@@ -1,4 +1,4 @@
-const API = 'window.location.origin';
+const API = window.location.origin;
 
 let selectedFile = null;
 let selectedFormat = 'md';
