@@ -16,7 +16,7 @@ MOMentum is a full-stack AI web application that takes any meeting audio or vide
 ---
 
 ## Live Demo
-> Coming soon ...
+> [https://haitaansh-momentum.hf.space](https://haitaansh-momentum.hf.space) 
 
 ---
 
