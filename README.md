@@ -1,3 +1,13 @@
+---
+title: MOMentum
+emoji: 🎙️
+colorFrom: green
+colorTo: green
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # MOMentum 
 > Upload your meeting recording or video. Get a professional Minutes of Meeting document instantly.
 
